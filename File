@@ -1,0 +1,30 @@
+var fieldName = "place";
+var oldValue = "Cambridge";
+var newValue = "Cambridge, MA";
+
+function do_substitution(item) {
+    // This will get run against every item in the found IDs
+    // Edit it to your heart's content!
+    let publisher  = item.getField('publisher');
+    let place = item.getField('place');
+    if (publisher === "Harvard University Press" && place === "Cambridge") {
+        item.setField('place', 'Cambridge, MA')
+    }
+}
+
+var fieldID = Zotero.ItemFields.getID(fieldName);
+var s = new Zotero.Search();
+s.libraryID = Zotero.Libraries.userLibraryID;
+s.addCondition(fieldName, 'is', oldValue);
+var ids = await s.search();
+if (!ids.length) {
+    return "No items found";
+}
+await Zotero.DB.executeTransaction(async function () {
+    for (let id of ids) {
+        let item = await Zotero.Items.getAsync(id);
+        do_substitution(item);
+        await item.save();
+    }
+});
+return ids.length + " item(s) updated";
